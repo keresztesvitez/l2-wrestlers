@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class Opposition {
     public class Counter {
-        private int count = 10;
+        private int count = 0;
 
         public void increment() {
             count++;
@@ -30,10 +30,15 @@ public class Opposition {
         @Override
         public void run() {
             while (true) {
-                if (increment) {
-                    counter.increment();
-                } else {
-                    counter.decrement();
+
+                synchronized (counter) {
+                    if (increment) {
+                        counter.increment();
+                    } else if (counter.get() == 0) {
+                        if (sleep()) break;
+                    } else {
+                        counter.decrement();
+                    }
                 }
 
                 int x = counter.get();
@@ -44,12 +49,20 @@ public class Opposition {
                 }
 
                 System.out.println("Wrestler" + Thread.currentThread().getName() + " " + x);
-                try {
-                    Thread.sleep(rand.nextInt(100));
-                } catch (InterruptedException e) {
+
+                if (sleep()) {
                     break;
                 }
             }
+        }
+
+        private boolean sleep() {
+            try {
+                Thread.sleep(rand.nextInt(100));
+            } catch (InterruptedException e) {
+                return true;
+            }
+            return false;
         }
 
     }
